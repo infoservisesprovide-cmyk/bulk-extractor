@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -44,20 +44,17 @@
     cursor: pointer;
     margin-top: 10px;
   }
-  button:hover {
-    background: #3558d3;
-  }
-  .output {
-    margin-top: 20px;
-  }
+  button:hover { background: #3558d3; }
+  .output { margin-top: 20px; }
   .output textarea {
-    height: 150px;
+    height: 120px;
     background: #f0f3fa;
   }
-  .copy-btn {
+  .copy-btn, .download-btn {
     background: #28a745;
-    margin-left: 10px;
+    margin-top: 5px;
   }
+  .download-btn { background: #ff9800; margin-left: 5px; }
   @media (max-width:600px) {
     textarea { height: 150px; }
     button { width: 100%; margin-top: 8px; }
@@ -65,39 +62,70 @@
 </style>
 </head>
 <body>
+
 <div class="container">
   <h2>📧 Bulk Mail & Number Extractor</h2>
   <p>Paste your text or list below. The tool will extract all email addresses and phone numbers automatically.</p>
 
-
   <textarea id="inputText" placeholder="Paste your data here..."></textarea><br/>
   <button onclick="extractData()">Extract</button>
 
-
   <div class="output">
-    <h3>✅ Extracted Emails & Numbers</h3>
-    <textarea id="output" readonly placeholder="Results will appear here..."></textarea><br/>
-    <button class="copy-btn" onclick="copyOutput()">Copy Result</button>
+    <h3>✅ Extracted Emails</h3>
+    <textarea id="emailOutput" readonly placeholder="Emails will appear here..."></textarea><br/>
+    <button class="copy-btn" onclick="copyToClipboard('emailOutput')">Copy Emails</button>
+    <button class="download-btn" onclick="downloadText('emailOutput','emails.txt')">Download Emails</button>
+
+    <h3>✅ Extracted Phone Numbers</h3>
+    <textarea id="phoneOutput" readonly placeholder="Phone numbers will appear here..."></textarea><br/>
+    <button class="copy-btn" onclick="copyToClipboard('phoneOutput')">Copy Phones</button>
+    <button class="download-btn" onclick="downloadText('phoneOutput','phones.txt')">Download Phones</button>
   </div>
 </div>
-
 
 <script>
 function extractData() {
   const text = document.getElementById("inputText").value;
-  const emails = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/g) || [];
-  const phones = text.match(/\b\+?\d{7,15}\b/g) || [];
-  const unique = Array.from(new Set([...emails, ...phones]));
-  document.getElementById("output").value = unique.join("\n");
-  if (!unique.length) alert("No emails or numbers found!");
+
+  // Extract emails
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/g;
+  let emails = text.match(emailRegex) || [];
+  emails = [...new Set(emails)].filter(email => validateEmail(email));
+
+  // Extract phones
+  const phoneRegex = /\+?\d[\d\s-]{7,}\d/g;
+  let phones = text.match(phoneRegex) || [];
+  phones = [...new Set(phones)];
+
+  document.getElementById("emailOutput").value = emails.join("\n");
+  document.getElementById("phoneOutput").value = phones.join("\n");
+
+  if (!emails.length && !phones.length) alert("No emails or phone numbers found!");
 }
-function copyOutput() {
-  const out = document.getElementById("output");
-  out.select();
-  out.setSelectionRange(0, 99999);
-  navigator.clipboard.writeText(out.value);
+
+function validateEmail(email) {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+}
+
+function copyToClipboard(id) {
+  const element = document.getElementById(id);
+  element.select();
+  element.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(element.value);
   alert("Copied to clipboard ✅");
 }
+
+function downloadText(id, filename) {
+  const text = document.getElementById(id).value;
+  const blob = new Blob([text], { type: 'text/plain' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
 </script>
+
 </body>
 </html>
